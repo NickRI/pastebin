@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+
+HISTORY_FILE="$HOME/.{{appname}}.history"
+
+if ! curl="$(type -p "curl")" || [ -z "$curl" ]; then
+  echo "curl command not found! Please install it first."
+  return 1
+fi
+
+usage() {
+  echo "{{appname}}: tool to deal with {{full_hostname}}"
+  echo "Usage: $0 [keys..] <command> [options ...]"
+  echo ""
+  echo "  [keys]          Additional keys"
+  echo ""
+  echo "Valid keys are:"
+  echo "  --bar/-b        Minimize curl progress-bar to # progress"
+  echo ""
+  echo "Valid commands are:"
+  echo "  upload    Upload file to service"
+  echo "  update    Update link with file"
+  echo "  download  Donwload file from service"
+  echo "  delete    Delete link on service"
+  echo "  history   Show util history"
+  echo "  help      Show this info"
+  exit 1
+}
+
+
+if [ $# -eq 0 ];
+then
+    echo "No arguments specified. "
+    usage
+    return 1
+fi
+
+is_exist() {
+  file=$1
+  basefile=$(basename "$file" | sed -e 's/[^a-zA-Z0-9._-]/-/g')
+  if [ ! -e $file ];
+  then
+      echo "File $file doesn't exists."
+      exit 1
+  fi
+}
+
+zip_folder() {
+  file=$1
+  zipfile=$( mktemp -t {{appname}}_XXX.zip )
+  cd $(dirname $file) && zip -r -q - $(basename $file) >> $zipfile
+  echo $zipfile
+}
+
+prepare_file() {
+  is_exist $1
+  if [ -d $1 ];
+  then
+    echo $(zip_folder $1)
+  else
+    echo $1
+  fi
+}
+
+while [ "$1" != "" ]; do
+  case $1 in
+    -b | --bar )
+      curl_opts="--progress-bar"
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+  break
+done
+
+case "$1" in
+  update)
+    if [ $# -ne 3 ]; then
+      echo "usage: $0 [opts] update <file|dir> <link|shortlink>"
+      exit 1
+    else
+      file=$(prepare_file $2)
+      link=${3#*//*/*}
+      result=$(curl $curl_opts --upload-file $file "{{full_hostname}}/$link")
+      echo "Update: $link -> $result"  >> $HISTORY_FILE
+      if [ -d $2 ]; then rm $file; fi
+      echo $result
+    fi
+    ;;
+  upload)
+    if [ $# -ne 2 ]; then
+      echo "usage: $0 [opts] upload <file|dir>"
+      exit 1
+    else
+      file=$(prepare_file $2)
+      result=$(curl $curl_opts -F 'file=@'$file'' "{{full_hostname}}")
+      echo "Upload: $2 -> $result"  >> $HISTORY_FILE
+      if [ -d $2 ]; then rm $file; fi
+      echo $result
+    fi
+    ;;
+  download)
+    if [ $# -ne 2 ]; then
+      echo "usage: $0 [opts] download <link|shortlink>"
+      exit 1
+    else
+      link=${2#*//*/*}
+      result=$(curl $curl_opts "{{full_hostname}}/$link" -O -J)
+      echo "Download: $link -> $result"  >> $HISTORY_FILE
+      echo $result
+    fi
+    ;;
+  delete)
+    if [ $# -ne 2 ]; then
+      echo "usage: $0 [opts] delete <link|shortlink>"
+      exit 1
+    else
+      link=${2#*//*/*}
+      result=$(curl $curl_opts -X DELETE "{{full_hostname}}/$link")
+      echo "Delete: $link -> $result" >> $HISTORY_FILE
+      echo $result
+    fi
+    ;;
+  history)
+    cat $HISTORY_FILE
+    ;;
+  help)
+    usage
+    ;;
+  *)
+    echo "unknown command: $1"; usage; exit 1
+    ;;
+esac

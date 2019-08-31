@@ -1,0 +1,80 @@
+{% extends "index.dtl" %}
+{% block body %}
+<pre>
+{{appname}} v{{version}}
+========================
+
+My first meaningful program on <b>Erland(OTP)/Cowboy/Erlydtl/Mnesia</b>
+
+<b>Add data</b>
+  <u>$ echo "My copy paste!" | curl -F 'file=<-' {{full_hostname}}</u>
+
+<b>Upload file</b>
+
+  All uploads work by multipart forms by <i>POST</i> method
+    <u>$ cat myfile.txt | curl -F 'file=<-' {{full_hostname}}</u>
+
+  You can also add name to your paste
+    <u>$ echo "Nick; Age; Email;" | curl -F 'name=data.csv' -F 'file=<-' {{full_hostname}}</u>
+    <u>$ cat myvids.wmv | curl -F 'name=myvids.wmv' -F 'file=<-' {{full_hostname}}</u>
+
+  Or add load with filename
+    <u>$ curl -F 'file=@data.csv' {{full_hostname}}</u>
+
+  If file is already exist than you will get old link
+
+<b>Progress</b>
+
+  To show progress add <i>-#/--progress-bar</i> option and/or pipe result to <i>more</i>
+
+    Standart progress
+      <u>$ curl -F 'file=@data.csv' {{full_hostname}} | more</u>
+
+    Progress bar
+      <u>$ cat myfile | curl --progress-bar -F 'file=<-' {{full_hostname}} | more</u>
+
+<b>Change link</b>
+
+  To update associated file you must use binary <i>PUT</i> method
+
+    <u>$ curl --upload-file file {{full_hostname}}/7gxCXz | more</u>
+    will update file with link <i>7gxCXz</i> with basic progress panel,
+    if link not exist than error message will return
+
+<b>Delete link</b>
+
+  To delete link from service you must use <i>DELETE</i> method.
+
+    <u>$ curl -X DELETE {{full_hostname}}/7gxCXz</u>
+    will return 7gxCXz is deleted error message if link not exist
+
+<b>Get data</b>
+
+  To console output
+    <u>$ curl {{full_hostname}}/{XXXXX}</u>
+
+  Output to disk
+    <u>$ curl {{full_hostname}}/{XXXXX} > mypaste.txt</u>
+
+  To save data with content-disposition[filename] and content-type
+    <u>$ curl {{full_hostname}}/{XXXXX} -O -J</u>
+    If 'name' was not set on upload then you have random file name
+
+  Also you can use browser address bar to download the file ;)
+
+
+<details>
+<summary><b>A client:</b></summary>
+<p style="color:grey">{% include 'client.dtl' %}</p>
+</details>
+Install
+  <u>$ curl {{full_hostname}}/client -O -J #Thats will download {{appname}}</u>
+  <u>$ chmod a+x {{appname}}</u>
+  <u style='color: lightgrey'># mv {{appname}} /usr/local/bin # Optional</u>
+  <u>$ ./{{appname}} <file></u>
+
+Client can also download folders.
+
+p.s. We are fast and furious, not mem/cpu devourer even on Gb uploads/downloads.
+</pre>
+{% endblock %}

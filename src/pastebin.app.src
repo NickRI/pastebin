@@ -1,0 +1,23 @@
+{application, pastebin,
+ [
+  {description, "Simple pastebin application"},
+  {vsn, "0.0.6"},
+  {registered, [
+    pastebin_links
+  ]},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  cowboy,
+                  erlydtl,
+                  systools,
+                  mnesia
+                 ]},
+  {mod, { pastebin_app, []}},
+  {env, [
+    {hostname, "domain.com"},
+    {port, 8080},
+    {proxyport, 80},
+    {appname, "pastebin"}
+  ]}
+ ]}.
